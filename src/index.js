@@ -7,7 +7,7 @@ async.forever(
   function(next){
     spider.crawl(function(){
       process.nextTick(function(){
-        next();
+        next(null);
       })
     });
   },
