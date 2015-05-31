@@ -3,6 +3,15 @@ var async = require('async');
 
 var spider = new Crawler();
 
-async.forever(function(cb){
-  spider.crawl(function(){});
-});
+async.forever(
+  function(next){
+    spider.crawl(function(){
+      process.nextTick(function(){
+        next();
+      })
+    });
+  },
+  function(err){
+    console.log(err);
+  }
+);

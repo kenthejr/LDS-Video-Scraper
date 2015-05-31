@@ -17,8 +17,8 @@ var Crawler = function(){
   this.url = this.baseSite;
 
   this.crawl = function(cb){
-    this.conn.spop('queue',function(err,res){
-      self.url = res != null ? res : self.baseSite;
+    self.conn.sdiff('queue','crawled', function(err,res){
+      self.url = res[0] != null ? res[0] : self.baseSite;
       phantom.create(function(ph){
         return ph.createPage(function(page){
           return page.open(self.url, function(status) {
@@ -27,15 +27,29 @@ var Crawler = function(){
               setTimeout(function(){
                 return page.evaluate(function(){
                   var pageArray = [];
+                  var videoArray = [];
                   $('a.video-thumb-play, a.next').each(function(){
                     pageArray.push($(this).attr('href'));
                   });
-                  return pageArray;
+                  console.log("test");
+                  if ($('#download-popup a.720p').length) {
+                    console.log($('#download-popup a.720p').attr('href'));
+                    videoArray.push($('#download-popup a.720p').attr('href'));
+                  } else if ($('#download-popup a.360p').length) {
+                    videoArray.push($('#download-popup a.360p').attr('href'));
+                  } else if ($('#download-popup a.1080p').length) {
+                    videoArray.push($('#download-popup a.1080p').attr('href'));
+                  }
+                  return [pageArray, videoArray];
                 }, function(result){
-                  for(i=0;i < result.length; i++){
-                    self.conn.sadd('queue',result[i]);
+                  for(i=0;i < result[0].length; i++){
+                    self.conn.sadd('queue',result[0][i]);
+                  }
+                  for(i=0;i < result[1].length; i++){
+                    self.conn.sadd('videos',result[1][i]);
                   }
                   console.log("Exiting");
+                  self.conn.sadd('crawled',self.url);
                   ph.exit();
                 });
               }, 5000);
@@ -43,6 +57,7 @@ var Crawler = function(){
           });
         });
       });
+      self._url = self.url;
     });
   }
 }
