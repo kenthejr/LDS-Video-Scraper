@@ -3,6 +3,7 @@ import log from "./log"
 import path from "path"
 import cheerio from "cheerio"
 import phantom from "node-phantom-simple"
+import Redis from "ioredis"
 
 let webdriver = null
 
@@ -54,12 +55,12 @@ async function main() {
     await setup()
 
     let pages = [config.get("baseSite")]
+    let redis = new Redis(config.get("redisPort"),config.get("redisHost"))
 
     while (pages.length > 0) {
       let nextPages = pages.splice(0, CHUNK_SIZE)
 
       let tasks = []
-      let videos = []
       for (let nextPage of nextPages) {
         tasks.push(fetch(nextPage))
       }
@@ -80,8 +81,10 @@ async function main() {
             let format = priority[i]
             let item = downloadContainer.find(`.${format}`)[0]
             if (item != null) {
+              redis.sadd('videos',item.attribs.href,function(err,res){
+                if (err) log.info(err)
+              })
               log.info({format},"found video at",item.attribs.href)
-              videos.push({url: item.attribs.href, format})
               break
             }
           }
