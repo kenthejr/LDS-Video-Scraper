@@ -5,3 +5,8 @@ redisPort: 32768
 redisHost: 78.48.1.15
 
 logLevel: info
+
+priority:
+  - 720p
+  - 360p
+  - 1080p

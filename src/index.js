@@ -74,17 +74,19 @@ async function main() {
 
         let downloadContainer = $("#download-popup")
         if (downloadContainer.length === 0) continue
-        function pull(format) {
-          let item = downloadContainer.find(`.${format}`)[0]
-          if (item != null) {
-            log.info({format},"found video at",item.attribs.href)
-            videos.push({url: item.attribs.href, format})
+
+        function pull(priority) {
+          for (let i in priority){
+            let format = priority[i]
+            let item = downloadContainer.find(`.${format}`)[0]
+            if (item != null) {
+              log.info({format},"found video at",item.attribs.href)
+              videos.push({url: item.attribs.href, format})
+              break
+            }
           }
         }
-
-        pull("360p")
-        pull("720p")
-        pull("1080p")
+        pull(config.get("priority"))
       }
     }
   } catch(err) {
