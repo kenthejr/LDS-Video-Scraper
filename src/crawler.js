@@ -34,9 +34,7 @@ var Crawler = function(){
                     $('a.video-thumb-play, a.next').each(function(){
                       pageArray.push($(this).attr('href'));
                     });
-                    console.log("test");
                     if ($('#download-popup a.720p').length) {
-                      console.log($('#download-popup a.720p').attr('href'));
                       videoArray.push($('#download-popup a.720p').attr('href'));
                     } else if ($('#download-popup a.360p').length) {
                       videoArray.push($('#download-popup a.360p').attr('href'));
