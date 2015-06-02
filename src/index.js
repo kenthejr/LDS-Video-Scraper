@@ -5,54 +5,93 @@ import cheerio from "cheerio"
 import phantom from "node-phantom-simple"
 import Redis from "ioredis"
 
-let webdriver = null
+//let webdriver = null
 
-const CHUNK_SIZE = 1
+const CHUNK_SIZE = 8
 
-async function setup() {
-  // Create a phantom.js webdriver
-  webdriver = await new Promise(function(resolve, reject) {
-    phantom.create(function(err, driver) {
-      if (err) reject(err)
-      else resolve(driver)
-    }, {
-      // Point at the phantomjs binary installed through npm
-      path: path.join(__dirname, "..node_modules/phantomjs/bin/")
-    })
-  })
-}
+// async function setup() {
+//   // Create a phantom.js webdriver
+  // webdriver = await new Promise(function(resolve, reject) {
+  //   phantom.create(function(err, driver) {
+  //     if (err) reject(err)
+  //     else resolve(driver)
+  //   }, {
+  //     // Point at the phantomjs binary installed through npm
+  //     path: path.join(__dirname, "..node_modules/phantomjs/bin/")
+  //   })
+  // })
+// }
 
-async function teardown() {
-  if (webdriver) {
-    // Release the phantom.js webdriver and its resources
-    webdriver.exit()
-    webdriver = null
-  }
-}
+// async function teardown() {
+//   if (webdriver) {
+//     // Release the phantom.js webdriver and its resources
+//     webdriver.exit()
+//     webdriver = null
+//   }
+// }
 
 // Get the HTML from a page by rendering it using phantomjs
-function fetch(url, timeout=250) {
-  return new Promise(function(resolve, reject) {
-    webdriver.createPage(function(err, page) {
-      if (err) return reject(err)
-      page.open(url, function(err, status) {
-        if (err) return reject(err)
-        setTimeout(function() {
-          page.evaluate(function() {
-            return document.body.outerHTML
-          }, function(err, result) {
-            if (err) return reject(err)
-            resolve(result)
-          })
-        }, timeout)
+// function fetch(url, timeout=250) {
+//   return new Promise(function(resolve, reject) {
+//     try {
+//       webdriver = await new Promise(function(resolve, reject) {
+//         phantom.create(function(err, driver) {
+//           if (err) reject(err)
+//           else resolve(driver)
+//         }, {
+//           // Point at the phantomjs binary installed through npm
+//           path: path.join(__dirname, "..node_modules/phantomjs/bin/")
+//         })
+//       })
+//       webdriver.createPage(function(err, page) {
+//         if (err) return reject(err)
+//         page.open(url, function(err, status) {
+//           if (err) return reject(err)
+//           setTimeout(function() {
+//             page.evaluate(function() {
+//               return document.body.outerHTML
+//             }, function(err, result) {
+//               if (err) return reject(err)
+//               resolve(result)
+//             })
+//           }, timeout)
+//         })
+//       })
+//     } catch(err) {
+//       log.fatal(err)
+//     } finally {
+//       webdriver.exit()
+//       webdriver = null
+//     }
+//   })
+// }
+
+function fetch(url, timeout=250){
+  return new Promise(function(resolve, reject){
+    phantom.create(function(err,ph){
+      return ph.createPage(function(err,page){
+        return page.open(url, function(err, status){
+          if (err) return reject(err)
+          setTimeout(function(){
+            page.evaluate(function(){
+              return document.body.outerHTML
+            }, function(err, result) {
+              if (err) return reject(err)
+              resolve(result)
+              ph.exit()
+            })
+          }, timeout)
+        })
       })
+    }, {
+      path: path.join(__dirname, "..node_modules/phantomjs/bin/")
     })
   })
 }
 
 async function main() {
   try {
-    await setup()
+    // await setup()
 
     let pages = [config.get("baseSite")]
     let redis = new Redis(config.get("redisPort"),config.get("redisHost"))
@@ -95,7 +134,7 @@ async function main() {
   } catch(err) {
     log.fatal(err)
   } finally {
-    await teardown()
+    // await teardown()
   }
 }
 
